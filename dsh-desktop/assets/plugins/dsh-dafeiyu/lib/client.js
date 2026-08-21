@@ -58,7 +58,7 @@ window.__ModuleLoader__.load({ id: 'dsh-dafeiyu', factory: (require) => {
     return React.createElement('li', { style: cardStyle, 'data-testid': 'dsh-dafeiyu-settings' },
       React.createElement('div', null,
         React.createElement('strong', { style: { fontSize: 16 } }, '大肥鱼桌面伴侣'),
-        React.createElement('p', { style: { margin: '5px 0 0', opacity: 0.72 } }, '入口和状态属于 DSH，鱼始终显示在 Windows 桌面最上层。'),
+        React.createElement('p', { style: { margin: '5px 0 0', opacity: 0.72 } }, '入口和状态属于 DSH，鲸鱼始终显示在桌面最上层。'),
       ),
       status === 'unavailable'
         ? React.createElement('span', { role: 'status' }, '大肥鱼设置尚未连接到 DSH Host。')
