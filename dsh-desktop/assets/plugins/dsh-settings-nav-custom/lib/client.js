@@ -223,68 +223,12 @@
     return target;
   }
 
-  // ───────────────────────── 分组分类 ─────────────────────────
-  var CATEGORIES = [
-    {
-      title: '核心功能',
-      match: ['通用设置', 'Agent 预设', '模型', '对话管理', '人设卡', '价格设置', '记忆', '自动压缩', '视觉模型']
-    },
-    {
-      title: '扩展与工具',
-      match: ['插件', '选择向导', '插件保护', 'Skills 与 MCP', '侧边临时会话', '侧边卡片', '自定义提示词', '快照', '归档对话管理', '一键迁移（夺舍）', 'ClawBot']
-    },
-    {
-      title: '外观与高级',
-      match: ['外观 · 字体与颜色', '第三方模型思考强度', 'AI 变更审核']
-    }
-  ];
-  var COLLAPSE_KEY = 'eac:settings-nav-collapse:v1';
-
-  function readCollapseState() {
-    try {
-      var raw = localStorage.getItem(COLLAPSE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return { collapsed: {} };
-  }
-
-  function writeCollapseState(state) {
-    try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-
   function findCategory(label) {
     var clean = (label || '').replace(/^\s*[^\w\u4e00-\u9fff]+\s*/, '');
-    for (var i = 0; i < CATEGORIES.length; i++) {
-      for (var j = 0; j < CATEGORIES[i].match.length; j++) {
-        if (clean === CATEGORIES[i].match[j] || clean.indexOf(CATEGORIES[i].match[j]) === 0) {
-          return CATEGORIES[i].title;
-        }
-      }
-    }
-    return '其他';
-  }
-
-  function groupSections(sections) {
-    var groups = {};
-    var groupOrder = [];
-    for (var i = 0; i < CATEGORIES.length; i++) {
-      groups[CATEGORIES[i].title] = [];
-      groupOrder.push(CATEGORIES[i].title);
-    }
-    groups['其他'] = [];
-    groupOrder.push('其他');
-    for (var j = 0; j < sections.length; j++) {
-      var cat = findCategory(sections[j].label);
-      groups[cat].push(sections[j]);
-    }
-    // 移除空分组
-    var result = [];
-    for (var k = 0; k < groupOrder.length; k++) {
-      if (groups[groupOrder[k]].length > 0) {
-        result.push({ title: groupOrder[k], sections: groups[groupOrder[k]] });
-      }
-    }
-    return result;
+    if (['通用设置', 'Agent 预设', '模型', '对话管理', '人设卡', '价格设置', '记忆', '自动压缩', '视觉模型'].indexOf(clean) !== -1) return 'core';
+    if (['插件', '选择向导', '插件保护', 'Skills 与 MCP', '侧边临时会话', '侧边卡片', '自定义提示词', '快照', '归档对话管理', '一键迁移（夺舍）', 'ClawBot'].indexOf(clean) !== -1) return 'ext';
+    if (['外观 · 字体与颜色', '第三方模型思考强度', 'AI 变更审核'].indexOf(clean) !== -1) return 'adv';
+    return 'other';
   }
 
   function applyToPanel(panelEl, sections, cfg, labelMap) {
@@ -303,81 +247,16 @@
         cell.style.display = '';
         var p = pos[sections[j].id];
         cell.style.order = String(p !== undefined ? p : sections.length + j);
+        // 给每个导航项添加分组标记（纯 CSS class，不改 DOM 结构）
+        cell.removeAttribute('data-eac-cat');
+        cell.setAttribute('data-eac-cat', findCategory(sections[j].label));
       }
     }
-    ensureGroupHeaders(panelEl, navList, sections, cfg, labelMap);
     ensureFooter(panelEl, navList, sections, cfg);
   }
 
-  function ensureGroupHeaders(panelEl, navList, sections, cfg, labelMap) {
-    // 移除旧的分组标题
-    var oldHeaders = navList.querySelectorAll('.eac-nav-group-header');
-    for (var h = 0; h < oldHeaders.length; h++) oldHeaders[h].parentElement.removeChild(oldHeaders[h]);
-
-    // 按可见项分组
-    var visibleSections = [];
-    for (var i = 0; i < sections.length; i++) {
-      if (!cfg.hidden.has(sections[i].id)) visibleSections.push(sections[i]);
-    }
-    var groups = groupSections(visibleSections);
-    var collapseState = readCollapseState();
-
-    // 为每个分组插入标题
-    for (var g = 0; g < groups.length; g++) {
-      var group = groups[g];
-      if (group.title === '其他' && group.sections.length === 0) continue;
-
-      var header = document.createElement('div');
-      header.className = 'eac-nav-group-header';
-      var isCollapsed = collapseState.collapsed[group.title] || false;
-      header.innerHTML = '<span class="eac-nav-group-arrow">' + (isCollapsed ? '›' : '⌄') + '</span>' +
-        '<span class="eac-nav-group-title">' + group.title + '</span>';
-      header.style.cssText = 'display:flex;align-items:center;gap:4px;padding:12px 12px 4px;' +
-        'font-size:11px;font-weight:600;color:var(--dsw-alias-label-tertiary,#6b7280);' +
-        'text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;flex:none;';
-      header.querySelector('.eac-nav-group-arrow').style.cssText = 'font-size:12px;transition:transform .15s;width:12px;text-align:center;';
-      header.querySelector('.eac-nav-group-title').style.cssText = 'flex:1;';
-
-      (function (groupTitle, headerEl, isCollapsedNow) {
-        headerEl.addEventListener('click', function () {
-          var cs = readCollapseState();
-          cs.collapsed[groupTitle] = !cs.collapsed[groupTitle];
-          writeCollapseState(cs);
-          var arrow = headerEl.querySelector('.eac-nav-group-arrow');
-          arrow.textContent = cs.collapsed[groupTitle] ? '›' : '⌄';
-          // 切换分组下所有导航项的显示
-          var cells = navList.querySelectorAll('button:not(.eac-nav-footer)');
-          for (var c = 0; c < cells.length; c++) {
-            var cat = findCategory(cells[c].textContent.replace(/^\s*[^\w\u4e00-\u9fff]+\s*/, '').trim());
-            if (cat === groupTitle) {
-              cells[c].style.display = cs.collapsed[groupTitle] ? 'none' : '';
-            }
-          }
-        });
-      })(group.title, header, isCollapsed);
-
-      // 插入到分组第一个导航项之前
-      var firstSection = group.sections[0];
-      var firstCell = findCell(navList, firstSection.label, labelMap);
-      if (firstCell) {
-        navList.insertBefore(header, firstCell);
-      } else {
-        navList.appendChild(header);
-      }
-
-      // 如果折叠了，隐藏分组下的所有项
-      if (isCollapsed) {
-        for (var s = 0; s < group.sections.length; s++) {
-          var cell = findCell(navList, group.sections[s].label, labelMap);
-          if (cell) cell.style.display = 'none';
-        }
-      }
-    }
-  }
-
   function ensureFooter(panelEl, navList, sections, cfg) {
-    var nav = navList.parentElement;
-    var footer = nav && nav.querySelector('.eac-nav-footer');
+    var footer = navList && navList.querySelector('.eac-nav-footer');
     if (!footer) {
       footer = document.createElement('button');
       footer.type = 'button';
@@ -388,7 +267,7 @@
         'border:1px dashed var(--dsw-alias-border-secondary,#3a3f4b);' +
         'border-radius:12px;color:var(--dsw-alias-label-secondary,#9aa3b2);' +
         'background:transparent;font-family:inherit;font-size:12px;line-height:34px;' +
-        'flex:none;text-align:center;';
+        'flex:none;text-align:center;order:9999;';
       footer.addEventListener('mouseenter', function () {
         footer.style.borderColor = 'var(--dsw-alias-border-interactive,#6aa8ff)';
         footer.style.color = 'var(--dsw-alias-label-interactive,#6aa8ff)';
@@ -400,7 +279,7 @@
       footer.addEventListener('click', function () {
         openEditor(panelEl, sections, cfg);
       });
-      nav.appendChild(footer);
+      navList.appendChild(footer);
     }
   }
 
@@ -537,23 +416,15 @@
   }
 
   // ───────────────────────── 导航栏滚动修复 ─────────────────────────
-  // macOS 下设置页导航项多时被裁掉，注入 overflow-y:auto
   var NAV_SCROLL_CSS_INJECTED = false;
   function injectNavScrollCSS() {
     if (NAV_SCROLL_CSS_INJECTED) return;
     NAV_SCROLL_CSS_INJECTED = true;
     var style = document.createElement('style');
+    style.id = 'eac-nav-scroll-fix';
     style.textContent =
-      /* nav 容器：允许滚动 */
-      '.VOzbGW_nav{overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}' +
-      /* nav 列表：不限高 */
-      '.VOzbGW_navList{flex:1;min-height:0}' +
-      /* 面板：允许 nav 溢出 */
-      '.VOzbGW_panel{overflow:visible!important}' +
-      /* 分组标题动画 */
-      '.eac-nav-group-header{transition:opacity .15s}' +
-      '.eac-nav-group-header:hover{opacity:.8}' +
-      '.eac-nav-group-arrow{transition:transform .15s ease}';
+      '.VOzbGW_nav{overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;height:100%}' +
+      '.VOzbGW_navList{flex:1;min-height:0}';
     document.head.appendChild(style);
   }
 
