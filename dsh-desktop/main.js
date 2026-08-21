@@ -178,6 +178,7 @@ function desktopProfileDir() {
 // 创建：package.json（bundles）+ pnpm-workspace.yaml + 空 patch 层。
 function ensureDesktopProfileInit() {
   try {
+    const homeDir = dshHome || path.join(os.homedir(), '.dsh');
     const dir = desktopProfileDir();
     if (desktopProfile() === 'web') return; // 共享模式走官方模板
     fs.mkdirSync(dir, { recursive: true });
@@ -201,7 +202,7 @@ function ensureDesktopProfileInit() {
     // 宿主依赖；全新隔离 DSH_HOME 没有安装闭包，先补齐桌面依赖中的
     // schemastery junction（Windows）或 symlink（macOS/Linux），避免
     // better-sidebar / side-session 触发整树失败。
-    const shared = path.join(home, 'profiles', 'node_modules');
+    const shared = path.join(homeDir, 'profiles', 'node_modules');
     const source = path.join(__dirname, 'node_modules', 'schemastery');
     const link = path.join(shared, 'schemastery');
     if (fs.existsSync(source) && !fs.existsSync(link)) {

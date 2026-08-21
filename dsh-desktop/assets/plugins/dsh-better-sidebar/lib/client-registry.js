@@ -1305,18 +1305,42 @@ window.__ModuleLoader__.load({
 		];
 		/** Chunk script endpoint served by the plugin host half (src/bundle-route.ts). */
 		const CHUNK_URL = (name) => `/sidebar/bundle/${name}.js`;
-		/** Resolve the shell-installed module system (set before any plugin activates). */
+		/**
+		 * Resolve the shell-installed module system (set before any plugin activates).
+		 *
+		 * 2026-08-21 macOS 适配修复：auto-terminal 在底部面板首次展开时立即触发
+		 * loadChunk("terminal")，此时 __DSH_MODULES__ 可能尚未被 dsh shell 注入
+		 * （时序竞争）。旧实现只做同步快照探测，未命中则直接返回 undefined →
+		 * throw → 无限重试。修复：探测未命中时返回一个 setTimeout polling promise，
+		 * 最长等待 5 秒（每 200ms 轮询一次），给 dsh shell 注入窗口。
+		 */
+		let _moduleSystemCached;
 		function moduleSystem() {
-			if (globalThis.__DSH_MODULES__) return globalThis.__DSH_MODULES__;
+			if (_moduleSystemCached) return _moduleSystemCached;
+			if (globalThis.__DSH_MODULES__) return (_moduleSystemCached = globalThis.__DSH_MODULES__);
 			try {
 				var ctx = globalThis.__cordis_context__;
-				if (ctx && ctx.modules) return ctx.modules;
+				if (ctx && ctx.modules) return (_moduleSystemCached = ctx.modules);
 			} catch {}
 			try {
 				var ml = globalThis.__ModuleLoader__;
-				if (ml && ml._modules) return ml._modules;
+				if (ml && ml._modules) return (_moduleSystemCached = ml._modules);
 			} catch {}
 			return globalThis.__DSH_MODULES__;
+		}
+		/** Polling wait for module system — resolves once available, rejects after timeout. */
+		function waitForModuleSystem(timeoutMs = 5000, intervalMs = 200) {
+			const quick = moduleSystem();
+			if (quick) return Promise.resolve(quick);
+			return new Promise((resolve, reject) => {
+				let elapsed = 0;
+				const timer = setInterval(() => {
+					elapsed += intervalMs;
+					const m = moduleSystem();
+					if (m) { clearInterval(timer); resolve(m); }
+					else if (elapsed >= timeoutMs) { clearInterval(timer); reject(new Error(`[dsh-better-sidebar] module system not available after ${timeoutMs}ms`)); }
+				}, intervalMs);
+			});
 		}
 		function chunkRegistry() {
 			const g = globalThis;
@@ -1372,8 +1396,13 @@ window.__ModuleLoader__.load({
 			const task = (async () => {
 				const test = testLoaders.get(name);
 				if (test !== void 0) return test();
-				const modules = moduleSystem();
-				if (modules === void 0) throw new Error(`[dsh-better-sidebar] chunk "${name}": client module system unavailable`);
+				// 先尝试同步获取；未命中则 polling 等待 dsh shell 注入 __DSH_MODULES__
+				// （macOS auto-terminal 时序竞争修复，最多等 5 秒）
+				let modules = moduleSystem();
+				if (modules === void 0) {
+					console.log(`[dsh-better-sidebar] chunk "${name}": module system not ready, polling…`);
+					modules = await waitForModuleSystem();
+				}
 				await scriptLoader(CHUNK_URL(name));
 				const factory = chunkRegistry()[name];
 				if (typeof factory !== "function") throw new Error(`[dsh-better-sidebar] chunk "${name}" script did not register its factory`);

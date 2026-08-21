@@ -125,6 +125,13 @@ Deepseek-Harness-EAC-Mac/
 
 ## 📝 更新日志
 
+### v1.0.1 (2026-08-21)
+
+- 🐛 **修复** `ensureDesktopProfileInit()` 中 `home` 变量未声明导致的 ReferenceError（每次启动必现）
+- 🐛 **修复** `.credentials.yaml` 权限安全检查：644 → 600（导致 dsh web 进程反复崩溃进入救援模式）
+- 🐛 **修复** `dsh-better-sidebar` 终端 chunk 加载失败（"client module system unavailable" 无限重试）— 新增模块系统 polling 等待机制，解决 auto-terminal 时序竞争
+- 🐛 **修复** `dsh-better-sidebar` `moduleSystem()` 增加结果缓存，避免重复探测开销
+
 ### v1.0.0 (2026-08-21)
 
 - 🎉 首次发布 macOS 版本
