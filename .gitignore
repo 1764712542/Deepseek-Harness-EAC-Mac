@@ -1,0 +1,16 @@
+# Build artifacts
+dsh-desktop/dist/
+dsh-desktop/node_modules/
+dsh-desktop/.pnpm-store/
+dsh-desktop/pnpm-lock.yaml
+dsh-desktop/pnpm-workspace.yaml
+
+# Electron
+*.dmg
+*.zip
+
+# macOS
+.DS_Store
+
+# Logs
+*.log

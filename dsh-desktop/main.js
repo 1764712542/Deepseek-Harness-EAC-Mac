@@ -678,15 +678,15 @@ function attachEditContextMenu(wc) {
     let template = null;
     if (params.isEditable) {
       template = [
-        { label: '撤销', role: 'undo', accelerator: 'Ctrl+Z', enabled: flags.canUndo !== false },
-        { label: '重做', role: 'redo', accelerator: 'Ctrl+Y', enabled: flags.canRedo !== false },
+        { label: '撤销', role: 'undo', accelerator: 'CmdOrCmdOrCtrl+Z', enabled: flags.canUndo !== false },
+        { label: '重做', role: 'redo', accelerator: 'CmdOrCmdOrCtrl+Shift+Z', enabled: flags.canRedo !== false },
         { type: 'separator' },
-        { label: '剪切', role: 'cut', accelerator: 'Ctrl+X', enabled: flags.canCut !== false },
-        { label: '复制', role: 'copy', accelerator: 'Ctrl+C', enabled: flags.canCopy !== false },
-        { label: '粘贴', role: 'paste', accelerator: 'Ctrl+V', enabled: flags.canPaste !== false },
+        { label: '剪切', role: 'cut', accelerator: 'CmdOrCmdOrCtrl+X', enabled: flags.canCut !== false },
+        { label: '复制', role: 'copy', accelerator: 'CmdOrCmdOrCtrl+C', enabled: flags.canCopy !== false },
+        { label: '粘贴', role: 'paste', accelerator: 'CmdOrCmdOrCtrl+V', enabled: flags.canPaste !== false },
         { label: '删除', role: 'delete', enabled: flags.canDelete !== false },
         { type: 'separator' },
-        { label: '全选', role: 'selectAll', accelerator: 'Ctrl+A' },
+        { label: '全选', role: 'selectAll', accelerator: 'CmdOrCmdOrCtrl+A' },
       ];
     } else if (params.mediaType === 'image' && params.srcURL) {
       template = [
@@ -694,22 +694,22 @@ function attachEditContextMenu(wc) {
         { label: '图片另存为…', click: () => { try { wc.downloadURL(params.srcURL); } catch {} } },
       ];
       if (flags.canCopy) {
-        template.push({ type: 'separator' }, { label: '复制', role: 'copy', accelerator: 'Ctrl+C' });
+        template.push({ type: 'separator' }, { label: '复制', role: 'copy', accelerator: 'CmdOrCmdOrCtrl+C' });
       }
     } else if (flags.canCopy) {
       template = [
         { label: '后退', role: 'back', enabled: wc.navigationHistory.canGoBack?.() ?? wc.canGoBack() },
         { label: '前进', role: 'forward', enabled: wc.navigationHistory.canGoForward?.() ?? wc.canGoForward() },
-        { label: '重新加载', role: 'reload', accelerator: 'Ctrl+R' },
+        { label: '重新加载', role: 'reload', accelerator: 'CmdOrCtrl+R' },
         { type: 'separator' },
-        { label: '复制', role: 'copy', accelerator: 'Ctrl+C' },
-        { label: '全选', role: 'selectAll', accelerator: 'Ctrl+A' },
+        { label: '复制', role: 'copy', accelerator: 'CmdOrCtrl+C' },
+        { label: '全选', role: 'selectAll', accelerator: 'CmdOrCtrl+A' },
       ];
     } else {
       template = [
         { label: '后退', role: 'back', enabled: wc.navigationHistory.canGoBack?.() ?? wc.canGoBack() },
         { label: '前进', role: 'forward', enabled: wc.navigationHistory.canGoForward?.() ?? wc.canGoForward() },
-        { label: '重新加载', role: 'reload', accelerator: 'Ctrl+R' },
+        { label: '重新加载', role: 'reload', accelerator: 'CmdOrCtrl+R' },
       ];
     }
     if (template && template.length) {
@@ -760,7 +760,7 @@ async function startServer(unsafePortRetries = 4, overlays = []) {
     // `--profile <name>` 直接在根命令上（本版本的 `web` 是 --profile web 的
     // 硬编码别名，不接受父级 --profile）；app 入口由 profile bundles 决定，
     // --host/--port 等透传给该 app。已实机冒烟验证 web-desktop 可启动。
-    const proc = spawn(nodeBin, ['--use-system-ca', bin, '--profile', desktopProfile(), '--host', '127.0.0.1', '--port', String(webPort), ...patchArgs], {
+    const proc = spawn(nodeBin, ['--use-system-ca', bin, '--profile', desktopProfile(), ...patchArgs, '--host', '127.0.0.1', '--port', String(webPort)], {
       cwd: userDataDir,
       env: childEnv(),
       windowsHide: true,
@@ -913,12 +913,18 @@ function waitUntilUp(url, timeoutMs = 120000) {
 }
 
 function startAndShow(overlays = []) {
-  // koffi 预检失败注入的目录选择器降级 overlay 一并交给 dsh web（--patch）。
+  // overlays 由 syncCompanionPlugins 统一处理，这里不再从 assets 收集
   const merged = [];
+  
+  // koffi 预检失败注入的目录选择器降级 overlay
   if (pickerBrowseOverlay && fs.existsSync(pickerBrowseOverlay)) merged.push(pickerBrowseOverlay);
+  
+  // 添加调用方传入的 overlays
   for (const p of overlays) {
     if (typeof p === 'string' && p && fs.existsSync(p) && !merged.includes(p)) merged.push(p);
   }
+  
+  log('boot', `overlay 文件: ${merged.length} 个`);
   return startServer(4, merged)
     .then(waitUntilUp)
     .then((url) => {
@@ -1499,7 +1505,28 @@ function createWindow({ startHidden = false } = {}) {
 
   // 关闭 → 按退出行为设置处理：ask 弹窗询问 / minimize 隐藏到托盘 / quit 退出。
   mainWindow.on('close', async (event) => {
-    if (forceQuit || !IS_WIN || !tray) return;
+    if (forceQuit || quitting) return;
+    // macOS：即使没有 tray，也支持 close-to-tray（隐藏窗口）
+    // Windows：需要 tray 存在
+    if (!IS_WIN && process.platform === 'darwin') {
+      // macOS 标准行为：有退出设置时遵循设置，否则直接关闭
+      const action = getExitAction();
+      if (action === 'quit') return; // 让窗口关闭
+      event.preventDefault();
+      let choice = action;
+      if (action === 'ask') {
+        choice = await askExitAction();
+        if (forceQuit || quitting) return;
+      }
+      if (choice === 'minimize') {
+        app.hide(); // macOS: hide app (removes from active apps but keeps in Dock)
+      } else {
+        forceQuit = true;
+        app.quit();
+      }
+      return;
+    }
+    if (!IS_WIN || !tray) return;
     event.preventDefault();
     const action = getExitAction();
     let choice = action;
@@ -1793,7 +1820,7 @@ function startHeartbeatLoop() {
 }
 
 // 统一的「重新加载」入口：处于恢复页（已放弃自动恢复）时走恢复流程，
-// 否则普通 reload。菜单与 Ctrl+R 共用。
+// 否则普通 reload。菜单与 CmdOrCtrl+R 共用。
 function reloadMainWindow() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const st = recovery ? recovery.stateOf(mainWindow) : null;
@@ -2968,11 +2995,20 @@ function trayHintOnce() {
   if (trayHintShown || !tray) return;
   trayHintShown = true;
   try {
-    tray.displayBalloon({
-      title: 'Deepseek Harness EAC 仍在运行',
-      content: '窗口已隐藏到系统托盘，点击托盘图标可重新打开。',
-      iconType: 'info',
-    });
+    if (process.platform === 'darwin') {
+      // macOS 不支持 displayBalloon，用系统通知代替
+      new Notification({
+        title: 'Deepseek Harness EAC 仍在运行',
+        body: '窗口已隐藏，点击 Dock 图标可重新打开。',
+        silent: true,
+      }).show();
+    } else {
+      tray.displayBalloon({
+        title: 'Deepseek Harness EAC 仍在运行',
+        content: '窗口已隐藏到系统托盘，点击托盘图标可重新打开。',
+        iconType: 'info',
+      });
+    }
   } catch {}
 }
 
@@ -3143,7 +3179,7 @@ const COMPANION_PLUGINS = [
   { id: 'prompt-custom', name: '@deepseek-ai/dsh-prompt-custom' },
   // 第三方 OpenAI 兼容模型的 reasoning_effort 控件（字段名可自定义）。
   { id: 'third-party-thinking', name: '@deepseek-ai/dsh-third-party-thinking' },
-  // 侧边临时会话：浮窗追问、不写主会话、多种回答引擎（Ctrl+Shift+S）。
+  // 侧边临时会话：浮窗追问、不写主会话、多种回答引擎（CmdOrCtrl+Shift+S）。
   { id: 'side-session', name: '@dsh-external/dsh-side-session', dir: 'dsh-side-session' },
   // 插件启停管理：设置页「插件 → 管理」标签，不重启切换插件启停
   // （IPC dsh:plugin-list / dsh:plugin-set-enabled，见下方接线）。
@@ -4002,7 +4038,7 @@ function retireRemovedBuiltinPlugins(profileDirP) {
 }
 
 function syncCompanionPlugins() {
-  if (!IS_WIN) return;
+  // 移除平台限制，让 macOS 也能同步内置插件
   try {
     const home = dshHome || path.join(os.homedir(), '.dsh');
     // 桌面专属 profile 必须先存在（未知 profile 不会被 dsh 自动初始化）。
@@ -4213,6 +4249,52 @@ function syncCompanionPlugins() {
     applyLegacySkinChoice();
   } catch (err) {
     log('boot', '同步配套插件失败: ' + err.message);
+  }
+}
+
+// macOS: healProfilesModuleFallback 可能遗漏部分依赖的 symlink，
+// 这里补建 profiles/node_modules 中缺失的、app 闭包中存在的共享包。
+function healProfileFallbackSymlinks() {
+  if (process.platform !== 'darwin') return;
+  try {
+    const home = dshHome || path.join(os.homedir(), '.dsh');
+    const modulesDir = path.join(home, 'profiles', 'node_modules');
+    fs.mkdirSync(modulesDir, { recursive: true });
+    const candidates = [
+      path.join(process.resourcesPath || '', 'app', 'package.json'),
+      path.join(__dirname, 'package.json'),
+    ];
+    const manifestFile = candidates.find((f) => fs.existsSync(f));
+    if (!manifestFile) return;
+    const appDir = path.dirname(manifestFile);
+    const appModulesDir = path.join(appDir, 'node_modules');
+    const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+    const deps = { ...manifest.dependencies, ...manifest.peerDependencies };
+    let created = 0;
+    for (const dep of Object.keys(deps)) {
+      const link = path.join(modulesDir, dep);
+      // 跳过已存在的 symlink
+      try {
+        const st = fs.lstatSync(link);
+        if (st.isSymbolicLink()) {
+          const target = fs.readlinkSync(link);
+          if (fs.existsSync(target)) continue;
+          fs.unlinkSync(link);
+        } else if (st.isDirectory()) continue;
+      } catch {}
+      // 直接检查 app/node_modules/<dep>/package.json 是否存在
+      const pkgDir = path.join(appModulesDir, dep);
+      const pkgJson = path.join(pkgDir, 'package.json');
+      if (!fs.existsSync(pkgJson)) continue;
+      try {
+        fs.mkdirSync(path.dirname(link), { recursive: true });
+        fs.symlinkSync(pkgDir, link, 'dir');
+        created++;
+      } catch {}
+    }
+    if (created) log('boot', `healProfileFallbackSymlinks: 补建 ${created} 个 symlink`);
+  } catch (err) {
+    log('boot', 'healProfileFallbackSymlinks 失败: ' + err.message);
   }
 }
 
@@ -4609,6 +4691,11 @@ function detectExternalDsh() {
 
 async function runClientUpdateFlow(manual) {
   if (quitting) return;
+  // macOS：客户端自更新暂不支持（需 DMG 分发机制），跳过
+  if (process.platform === 'darwin') {
+    if (manual) await showBox({ type: 'info', title: '更新', message: 'macOS 版本请通过 GitHub Releases 手动更新。', buttons: ['确定'] });
+    return;
+  }
   if (clientUpdateBusy) {
     if (manual) await showBox({ type: 'info', title: '更新', message: '客户端更新正在进行中，请稍候。', buttons: ['确定'] });
     return;
@@ -4761,6 +4848,7 @@ async function runClientUpdateFlow(manual) {
 }
 
 function offerPendingClientUpdate() {
+  if (process.platform === 'darwin') return; // macOS 不支持自动更新
   const ctx = updCtx();
   const settings = updater.loadSettings(ctx);
   const pending = settings.pendingClientUpdate;
@@ -4957,8 +5045,66 @@ async function boot() {
   desktopLog = fs.createWriteStream(path.join(logsDir, 'desktop.log'), { flags: 'a' });
   log('boot', `Deepseek Harness EAC（封装 ${APP_VERSION}）  userData=${userDataDir}  dshHome=${dshHome || '(dsh 默认)'}  agent=${dshVersion()}(${dshVersionSource()})`);
 
-  // 移除原生菜单栏（文件/视图/帮助），全部功能由自绘 chrome 与托盘提供。
-  Menu.setApplicationMenu(null);
+  // macOS：保留标准应用菜单（Cmd+Q / Cmd+, / Cmd+H 等），Windows：移除菜单栏
+  if (process.platform === 'darwin') {
+    const { app } = require('electron');
+    const template = [
+      {
+        label: app.name,
+        submenu: [
+          { role: 'about' },
+          { type: 'separator' },
+          { role: 'services' },
+          { type: 'separator' },
+          { role: 'hide' },
+          { role: 'hideOthers' },
+          { role: 'unhide' },
+          { type: 'separator' },
+          { role: 'quit' },
+        ],
+      },
+      {
+        label: '编辑',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'pasteAndMatchStyle' },
+          { role: 'delete' },
+          { role: 'selectAll' },
+        ],
+      },
+      {
+        label: '视图',
+        submenu: [
+          { role: 'reload' },
+          { role: 'forceReload' },
+          { role: 'toggleDevTools' },
+          { type: 'separator' },
+          { role: 'resetZoom' },
+          { role: 'zoomIn' },
+          { role: 'zoomOut' },
+          { type: 'separator' },
+          { role: 'togglefullscreen' },
+        ],
+      },
+      {
+        label: '窗口',
+        submenu: [
+          { role: 'minimize' },
+          { role: 'zoom' },
+          { type: 'separator' },
+          { role: 'front' },
+        ],
+      },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  } else {
+    Menu.setApplicationMenu(null);
+  }
   startPreviewStaticServer();
   registerChromeIpc();
   createTray();
@@ -4983,6 +5129,7 @@ async function boot() {
   // 「已有行不重写」规则天然保留用户选择。
   await runPluginOnboardingIfNeeded(onboardingNeeded);
   syncCompanionPlugins();
+  healProfileFallbackSymlinks();
   syncBundledSkills();
   healProfileModules();
   createWindow();
@@ -5005,6 +5152,7 @@ async function boot() {
       // hoist 核心包形成双实例）—— 服务启动前重建副本并清理遮蔽，
       // 保证加载的始终是内置分发版本。
       syncCompanionPlugins();
+      healProfileFallbackSymlinks();
       syncBundledSkills();
       healProfileModules();
       // V4 兜底：上次 pnpm 后异常退出没回填的第三方构建产物（meow-memory
