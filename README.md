@@ -125,6 +125,11 @@ Deepseek-Harness-EAC-Mac/
 
 ## 📝 更新日志
 
+### v1.0.2 (2026-08-21)
+
+- 🐛 **修复** 模型切换失效：rc.8 把前端核心包移出运行时依赖（`dsh-client-web` / `dsh-client-ui-primitives` / `dsh-client-ui-slots` / `dsh-client-schema-form`），但插件仍 require 它们 → 闭包缺失 → 从外部 DSH Desktop.app (rc.7) 加载导致 Symbol 身份不一致。已补全依赖并安装进闭包
+- 🐛 **修复** 底部终端 `module system not available after 5000ms`：重写 `__DSH_MODULES__` 桥接（document_start 注入 hook 拦截 `__ModuleLoader__.create()`），并给 `moduleSystem()` 增加工厂 `require` 兜底
+
 ### v1.0.1 (2026-08-21)
 
 - 🐛 **修复** `ensureDesktopProfileInit()` 中 `home` 变量未声明导致的 ReferenceError（每次启动必现）
