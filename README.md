@@ -1,292 +1,265 @@
 <div align="center">
 
-<p><a href="README.md">中文</a> | <a href="README.en.md">English</a></p>
+<h1>Deepseek Harness EAC — macOS 版</h1>
 
-<h1>Deepseek Harness EAC — 揽尽万象</h1>
-
-<p><strong>EAC = Embracing All Creation（揽尽万象）</strong></p>
+<p><strong>基于 <a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC">Deepseek-Harness-EAC</a> 的 macOS 桌面客户端</strong></p>
 
 <p>
-<a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC"><img src="https://img.shields.io/github/stars/zouyuxuan122/Deepseek-Harness-EAC?style=flat&label=%E2%AD%90&color=08C" alt="GitHub stars"></a>
-<a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases"><img src="https://img.shields.io/badge/Windows-10%2F11-4493F8?style=flat" alt="Windows"></a>
-<a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/tag/v4.4.0-linux"><img src="https://img.shields.io/badge/Linux-pacman%2Fdeb%2Frpm%2FAppImage-178600?style=flat" alt="Linux"></a>
-<a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC"><img src="https://img.shields.io/badge/Desktop-App-47848F?style=flat" alt="Desktop App"></a>
-<a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
+<a href="https://github.com/1764712542/Deepseek-Harness-EAC-Mac"><img src="https://img.shields.io/github/stars/1764712542/Deepseek-Harness-EAC-Mac?style=flat&label=%E2%AD%90&color=08C" alt="GitHub stars"></a>
+<a href="https://github.com/1764712542/Deepseek-Harness-EAC-Mac/releases"><img src="https://img.shields.io/badge/macOS-10.15+-000000?style=flat" alt="macOS"></a>
+<a href="https://github.com/1764712542/Deepseek-Harness-EAC-Mac/releases"><img src="https://img.shields.io/badge/Apple%20Silicon-ARM64-A2AAAD?style=flat" alt="Apple Silicon"></a>
+<a href="https://github.com/1764712542/Deepseek-Harness-EAC-Mac/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
 </p>
 
 <p>把官方 <a href="https://github.com/deepseek-ai/deepseek-harness">deepseek-ai/deepseek-harness</a>（<code>@deepseek-ai/dsh</code>，一切皆插件的 agent harness）
-封装为<strong>开箱即用的 Windows / Linux 桌面客户端</strong>，并在其上拥抱社区万象：皮肤、插件、工具、记忆——你所能想到的，一键皆可装。</p>
-
-<p><a href="docs/screenshot-preview.jpg"><img src="docs/screenshot-preview.jpg" alt="Deepseek Harness EAC 界面预览"></a></p>
+封装为<strong>开箱即用的 macOS 桌面客户端</strong>，支持 Intel 和 Apple Silicon，双击即用。</p>
 
 </div>
 
 ---
 
-## 相比原版 DeepSeek Harness 的优势
+## 🙏 致谢与声明
 
-| 能力 | 原版 dsh（官方 deepseek-harness） | Deepseek Harness EAC |
-| --- | --- | --- |
-| 运行方式 | 需先安装 Node.js，`npx @deepseek-ai/dsh web` + 浏览器访问 | **免装 Node**：内置独立 Node 运行时与 npm CLI，双击即用 |
-| 与 CLI 共存 | —（本体） | **桌面专属 profile（web-desktop）**：插件树/pnpm/patch 层与原生 CLI 完全隔离，会话与 API Key 依旧共享；共享 junction 归属自动守卫修复，互不打扰 |
-| 插件安全 | 手动 npm，装坏自负 | **内置插件保护中心**：安装/启动前自动快照、启动失败自动体检修复、必要时回滚到最后良好快照，事故报告全程留痕（融合三大社区保护插件并内置升华） |
-| 界面皮肤 | 仅官方默认外观 | **内置 10 款 Web UI 皮肤**（XP / QQ98 / 初音未来 / 我的世界 / 同花顺 / 鲸歌…），设置页一键互斥切换，默认不启用保持原生 |
-| 字体外观 | 无 | 设置页「外观 · 字体与颜色」：**字体家族/字号/文字与代码颜色**实时自定义，与皮肤同体系 |
-| 窗口体验 | 浏览器标签页 | **原生无边框窗口**（自绘玻璃栏）+ **系统托盘常驻**，关闭不打断任务 |
-| 便携性 | 无 | **便携版**数据跟随 exe，拷到 U 盘即用 |
-| 余额查看 | 手动上官网查 | 对话底部内联「**本轮 ¥X · 余额 ¥Y**」实时小部件，点击跳转充值 |
-| 文件管理 | 手动翻目录 | **会话文件更改追踪**（行级 diff）+ **一键还原**，全部/逐文件 |
-| 会话内终端 | 无 | **终端标签页**：会话项目目录内持久 PowerShell，SSE 流式，断线重连 |
-| 长对话 | 手动 /compact | **默认自动压缩**：接近上下文上限（默认 80%，可调）自动执行官方 /compact |
-| 人设 | 手编 soul.md | 设置页「人设卡」：**6 张内置预设一键应用 + 我的卡片库** + 实时编辑热重载 |
-| 配置上手 | 手编 YAML | **设置页可视化**：视觉模型一键选择、MCP 增删改 + **从 Claude Code / Codex 一键导入**、**从 Codex / Claude Code 一键迁移 skills + MCP + 记忆** |
-| 插件安装 | 手动 npm | 设置页内置**插件市场**，搜索/一键安装/卸载 dsh 插件 |
-| 更新 | 手动 `npm update` | **双重自动更新**：官方 agent 更新（npm overlay，失败可回退）+ 客户端本体自更新，均经用户同意 |
-| 任务通知 | 无 | agent 任务完成弹 **Windows 系统通知**，点击回到窗口 |
-| 系统要求 | Windows/macOS/Linux + Node.js 环境 | Windows 10/11、Linux x86_64（x64），**无需任何运行时** |
+> **本项目基于以下开源项目二次开发：**
+>
+> - **[Deepseek-Harness-EAC](https://github.com/zouyuxuan122/Deepseek-Harness-EAC)** by [@zouyuxuan122](https://github.com/zouyuxuan122) — Windows/Linux 桌面客户端
+> - **[deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** by [DeepSeek AI](https://github.com/deepseek-ai) — 官方 agent harness
+>
+> 本项目在 EAC 的基础上增加了 **macOS 平台支持**，核心功能和大部分代码均来自原项目。
+> 特别感谢 [@zouyuxuan122](https://github.com/zouyuxuan122) 的出色工作！
 
-> 内核零改动：EAC 直接运行官方 `dsh web`，完整保留「一切皆插件」架构与全部官方能力，
-> 与 CLI 共享 `DSH_HOME` 配置，已有会话/API Key 直接生效。
+**原创项目功能：**
+- ✅ 免装 Node.js，内置独立运行时
+- ✅ 10 款 Web UI 皮肤
+- ✅ 插件保护中心
+- ✅ 自动压缩、人设卡、MCP 导入
+- ✅ 会话文件追踪、终端标签页
+- ✅ 社区插件市场
+- ✅ 等等...（详见 [原项目 README](https://github.com/zouyuxuan122/Deepseek-Harness-EAC)）
 
----
-
-## 下载安装（部署方式）
-
-### GitHub Releases（推荐）
-
-> GitHub 无单文件大小限制，可直接下载完整安装包。
-
-| 文件 | 说明 | 大小 |
-| --- | --- | --- |
-| [便携版 exe](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/latest/download/Deepseek-Harness-EAC-Portable-v4.4.1-x64.exe) | 免安装，双击即用，可放 U 盘 | ~226 MB |
-| [安装版 exe](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/latest/download/Deepseek-Harness-EAC-Setup-v4.4.1-x64.exe) | 安装到系统，创建桌面/开始菜单快捷方式 | ~241 MB |
-
-更多版本见 [Releases 页面](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases)。
-
-### Linux（x64）
-
-Linux 打包由社区开发者 [@Luoye-hb](https://github.com/Luoye-hb) 贡献（[PR #12](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/pull/12)），随 [v4.4.0-linux](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/tag/v4.4.0-linux) 发布，支持 **Arch / Ubuntu / Debian / Fedora** 与通用 AppImage：
-
-| 发行版 | 包 | 安装 |
-| --- | --- | --- |
-| Arch Linux | [.pacman](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/download/v4.4.0-linux/Deepseek-Harness-EAC-4.4.0-x64.pacman) | `sudo pacman -U ./Deepseek-Harness-EAC-4.4.0-x64.pacman` |
-| Ubuntu / Debian | [.deb](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/download/v4.4.0-linux/Deepseek-Harness-EAC-4.4.0-amd64.deb) | `sudo apt install ./Deepseek-Harness-EAC-4.4.0-amd64.deb` |
-| Fedora | [.rpm](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/download/v4.4.0-linux/Deepseek-Harness-EAC-4.4.0.x86_64.rpm) | `sudo dnf install ./Deepseek-Harness-EAC-4.4.0.x86_64.rpm` |
-| 通用 | [.AppImage](https://github.com/zouyuxuan122/Deepseek-Harness-EAC/releases/download/v4.4.0-linux/Deepseek-Harness-EAC-4.4.0-x86_64.AppImage) | `chmod +x` 后直接运行 |
-
-> - 卸载：`pacman -Rns dsh-desktop` / `apt remove dsh-desktop` / `dnf remove dsh-desktop`
-> - 与 Windows 版一致：内置 Node.js 与 npm CLI，目标机器无需预装 Node.js；数据目录沿用 `~/.dsh`（`DSH_HOME`）
-> - Linux 版由系统包管理器管理升级，不走应用内自更新；安装到仓库根 `linux` 分支源码可自行构建
-
-> ⚠️ **务必安装/放置到纯英文路径**（默认 `C:\Users\<你>\AppData\Local\Programs\` 即可）：中文路径（如 `D:\迅雷下载\`）会触发 Chromium 渲染进程原生崩溃，窗口弹出数十秒后自动退出。
-
-**首次使用**：
-
-1. 双击运行，显示启动动画，随后自动加载 DeepSeek Harness Web UI（原生窗口，仅本机回环访问）。
-2. 如尚未配置 API Key，在界面「设置」内完成配置即可开始使用（与命令行 dsh 完全一致）。
-3. 常用入口：设置 → 皮肤（10 款内置皮肤切换）/ 插件市场 / 模型一键选择；对话区 → 终端 / 文件标签页。
-
-> 便携版数据目录在 exe 旁的 `data\`；安装版在 `%APPDATA%\Deepseek Harness EAC\`。
-> 想强制指定 DSH 配置目录？启动前设置环境变量 `DSH_HOME` 即可（与 dsh CLI 行为一致）。
-
-### 升级部署
-
-- **客户端本体**：启动后自动检查上游新版本（GitHub Releases 双源回退），经你同意后下载安装；便携版原地替换自动重启，安装版引导新安装包。失败自动保留当前版本。
-- **官方 agent（dsh）**：自动检测 `@deepseek-ai/dsh` 新版本，同意后安装到数据目录 overlay，原子切换，新版启动失败可一键回退内置版本。
-- 也可直接下载上方最新安装包覆盖安装，数据不会丢失；v2.0 起安装器在卸载旧版前自动结束运行中的新旧进程，覆盖安装不再报 "Failed to uninstall old application files"。
+**本项目新增（macOS 版）：**
+- 🍎 **macOS 原生支持**：Universal Binary，同时支持 Intel (x64) 和 Apple Silicon (arm64)
+- 📦 **DMG 安装包**：标准 macOS 安装体验
+- 🔐 **权限配置**：正确的应用权限和 Hardened Runtime
+- 🛠️ **构建工具**：完整的 macOS 构建脚本和文档
 
 ---
 
-## 功能一览
+## 📥 下载安装
 
-### 界面皮肤自定义（EAC 特色）
+### 预编译版本
 
-- 设置页「皮肤」标签页内置 **10 款 Web UI 皮肤**，卡片式网格展示（名称/简介/主色/作者/出处与许可角标）。
-- 9 款来自社区 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（BSD-3-Clause）+ 1 款 [dsh-deep-whale 深海女仆工坊](https://github.com/Small-tailqwq/dsh-deep-whale)（CC BY-NC-SA 4.0，禁止商用）。
-- **默认不启用任何皮肤**（原生外观）；选中某款后其余自动禁用（互斥切换），「恢复默认皮肤」一键还原；切换后自动重启 Web 服务生效。
-- 皮肤是 browser-only 的 dsh client 插件，由桌面端同步进 web profile 并幂等注册到 `cordis.patch.yml`，完整版权署名随包分发。
+> ⚠️ 当前版本需要自行构建，预编译版本将在后续版本发布。
 
-| 皮肤 | 出处 | 许可 |
-| --- | --- | --- |
-| xp（Windows XP 风格） | [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) | BSD-3-Clause |
-| qq98（QQ 经典 98 风格） | 同上 | BSD-3-Clause |
-| ths（同花顺风格） | 同上 | BSD-3-Clause |
-| blue-fantasy（蓝幻） | 同上 | BSD-3-Clause |
-| dragon-heir（龙裔） | 同上 | BSD-3-Clause |
-| minecraft（我的世界） | 同上 | BSD-3-Clause |
-| trading（交易风格） | 同上 | BSD-3-Clause |
-| whale-song（鲸歌） | 同上 | BSD-3-Clause |
-| miku（初音未来） | 同上 | BSD-3-Clause |
-| maid-atelier（深海女仆工坊） | [dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) | **CC BY-NC-SA 4.0**（禁止商用） |
+### 从源码构建
 
-### 开箱即用
+#### 系统要求
 
-- **免装 Node**：内置独立 Node 运行时与 npm CLI，目标机器无需安装 Node.js
-- **内置 dsh CLI**：完整打包 `@deepseek-ai/dsh` 及全部官方插件，离线可用
-- **一键启动**：双击即启动 `dsh web`，自动挑空闲端口，就绪后加载到原生窗口
-- **与 CLI 共享配置**：默认沿用 `DSH_HOME`（通常 `~\.dsh`），已有会话/API Key 直接生效
-- **便携版**：数据跟随 exe 所在目录，拷到 U 盘就能用
+- macOS 10.15 (Catalina) 或更高版本
+- Node.js 18+（推荐使用 [nvm](https://github.com/nvm-sh/nvm) 管理）
+- Xcode Command Line Tools（运行 `xcode-select --install` 安装）
 
-### 桌面体验
+#### 构建步骤
 
-- **风格化无边框窗口 + 系统托盘**：无原生标题栏/菜单栏，自绘玻璃栏（圆角图标、⋯ 菜单、窗口控制），Win11 圆角；关闭默认隐藏到托盘
-- **退出即清理**：退出应用自动结束 dsh 进程树，不留孤儿进程
-- **快捷方式自动维护**：便携版自动创建/修复桌面与开始菜单快捷方式（exe 移动后自愈）
-- **会话完成通知**：agent 任务跑完时弹 Windows 系统通知，点击回到窗口
+```bash
+# 1. 克隆仓库
+git clone https://github.com/1764712542/Deepseek-Harness-EAC-Mac.git
+cd Deepseek-Harness-EAC-Mac/dsh-desktop
 
-### 效率工具（配套插件体系）
+# 2. 安装依赖
+npm install --force
 
-- **插件保护中心（v3.1 新增，内置 plugin-guard 引擎）**：融合社区三大保护插件
-  （[lxzy-7/dsh-plugin-guard](https://github.com/lxzy-7/dsh-plugin-guard) 快照回滚、
-  [LX2000WASD/dsh-web-plugin-manager](https://github.com/LX2000WASD/dsh-web-plugin-manager) 安装守卫、
-  [chenw2759-wq/dsh-plugin-healthcheck](https://github.com/chenw2759-wq/dsh-plugin-healthcheck) 静态体检）
-  并内置到桌面壳：每次安装与启动前自动快照 profile 配置（保留 10 份）；启动失败自动
-  体检（模块遮蔽 / patch 行 / junction 归属 / 高危静态扫描）→ 修复 → 重试 → 回滚到
-  最后良好快照 → 事故报告；设置页「插件保护」可手动快照 / 回滚 / 体检 / 修复。
-- **与原生 CLI 完全共存（v3.1 根治）**：桌面端运行在专属 `web-desktop` profile
-  （会话/API Key 仍共享 DSH_HOME），插件树互不干扰；共享模块 junction 的归属自动
-  巡检修复，原生 `npx dsh` 与桌面端交替使用不再互相破坏。
-- **外观自定义（v3.1 新增，dsh-font-custom）**：设置页「外观 · 字体与颜色」——
-  界面/代码字体、字号、文字与代码颜色实时自定义，localStorage 持久化。
-- **自动压缩（v3.1 新增，dsh-auto-compact，默认开启）**：对话接近上下文上限
-  （默认 80%，可调）时自动执行官方 `/compact`，空闲触发、失败静默重试。
-- **人设卡完整管理（v3.1 升级）**：设置页「人设卡」——6 张内置预设一键应用、
-  我的卡片库（保存/应用/删除）、当前卡片实时编辑热重载。
-- **MCP 一键导入（v3.1 升级，dsh-dock-settings）**：MCP 管理页新增「从 Claude /
-  Codex 导入」，勾选合并 `~/.claude.json` 与 `~/.codex/config.toml` 的 MCP 服务器。
-- **DeepSeek 余额小部件**：对话底部统计栏显示「本轮 ¥X · 余额 ¥Y」，点击跳转充值，15 分钟自动刷新
-- **文件更改追踪 + 一键还原**：「文件」标签页查看本会话全部文件改动（新建/修改/删除 + 行级 diff）并逐文件/全部还原；数据只读复用会话日志，稳定不受升级影响
-- **会话内终端**：「终端」标签页在当前会话项目目录启动持久 PowerShell（SSE 流式、命令历史、断线重连），中文编码干净
-- **项目文件树 + HTML/端口预览**：VSCode 风格文件树，站内预览 HTML/本地端口服务（仅回环）
-- **社区插件市场（v2 新增，dsh-webui-market）**：设置 → 插件 → 市场，浏览 awesome-dsh-plugin.com 收录的 dsh 插件并一键安装/卸载到 profile；安装/卸载任务在服务重启窗口期排队执行，不打断当前会话
-- **外置视觉模型（v2 新增，dsh-tool-vision）**：`inspect_image` 工具把本地图片或图片 URL 发给任意 OpenAI 兼容视觉端点（qwen-vl / GLM-4V / Ollama 等），看图回答直接带回对话
-- **soul.md 人设热重载（v2 新增，dsh-soul-md）**：markdown 人设文件注入系统提示词（`soul:persona`），文件变更即时热重载，Agent 边干活边角色扮演
-- **移动端布局修复（v2 新增，dsh-web-mobile-fix）**：窄屏（≤400px）下设置面板、弹窗、侧栏、会话头布局修复，纯前端 CSS，不影响桌面布局
-- **快速配置（dsh-easy-setup）**：视觉模型提供商/模型一键选择、`soul.md` 人设可视化编辑、从 Codex / Claude Code 目录一键迁移 skills + MCP + 记忆
-- **双重自动更新**：官方 dsh agent 更新（npm overlay）+ 客户端封装自更新，均经用户同意，失败自动回退
-- **稳定性自愈**：`profile-module-heal` 自动修复 profile 模块遮蔽问题（真实目录与 pnpm 链接双形态，如 `prompt section already registered`、「设置命名空间不可用」、模型列表/模式切换失效）；`plugin-guard` 守护启动失败链路（体检 → 修复 → 回滚 → 事故报告）；重启服务时等待旧进程完全退出（释放文件锁）再启动新服务，插件包（含自带 vendor 依赖）随安装包原样分发
-- **临时对话（v4 新增，dsh-side-session）**：DSH 临时会话：独立悬浮窗，自动导入当前主对话上下文，发起不污染主会话的临时追问
-- **自定义第三方模型思考强度（v4 新增，dsh-third-party-thinking）**：让接入的第三方模型也能在使用时调整思考强度
-- **对话节点导航条（v4 新增，dsh-navbar）**：user 消息快速跳转
-- **微信ClawBot**(v4.1新增)：一键将Deepseek-Harness-EAC接入ClawBot
+# 3. 获取 macOS 运行时
+npm run fetch-runtime-mac
+
+# 4. 生成应用图标（可选）
+node scripts/build-icon-mac.js
+
+# 5. 构建 Universal Binary（支持 Intel + Apple Silicon）
+npm run dist:mac:universal
+```
+
+构建完成后，`dist/` 目录下会生成：
+- `Deepseek-Harness-EAC-v4.6.0-universal.dmg` — DMG 安装包
+- `Deepseek-Harness-EAC-v4.6.0-universal.zip` — ZIP 压缩包
+
+#### 其他构建选项
+
+```bash
+# 仅构建 ARM64 版本（Apple Silicon）
+npm run dist:mac:arm64
+
+# 仅构建 x64 版本（Intel）
+npm run dist:mac
+```
 
 ---
 
-## 系统要求
+## 🚀 使用方法
 
-- Windows 10/11（x64）
-- Linux x86_64（Arch / Ubuntu / Debian / Fedora，或任意支持 AppImage 的发行版）
-- 无需预装 Node.js 或任何其他运行时
+### 首次启动
 
-## 从源码构建
+1. 双击 DMG 文件，将应用拖入 Applications 文件夹
+2. 启动应用，首次运行会自动初始化配置
+3. 在设置中配置 DeepSeek API Key
+4. 开始使用！
 
-```powershell
-cd dsh-desktop
-npm install
-npm run fetch-runtime    # 内置 node.exe + npm CLI
-npm run dist             # 构建 portable + NSIS 安装包 → dist/
+### 配置目录
+
+- **配置文件**：`~/.dsh/`
+- **会话数据**：`~/.dsh/sessions/`
+- **插件目录**：`~/.dsh/profiles/web-desktop/`
+
+> 与命令行 dsh CLI 完全兼容，共享配置和会话数据。
+
+### 环境变量
+
+```bash
+# 自定义配置目录
+export DSH_HOME=~/.my-dsh
+
+# 调试模式
+export DSH_DESKTOP_DEBUG=1
 ```
 
-> 网络受限时：Electron 镜像 `$env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'`；打包工具链镜像 `$env:ELECTRON_BUILDER_BINARIES_MIRROR='https://npmmirror.com/mirrors/electron-builder-binaries/'`。
+---
 
-运行测试：
-
-```powershell
-npm test                 # node --test test/*.test.mjs
-```
-
-## 架构
+## 🏗️ 项目结构
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  Electron 壳 (main.js)                                   │
-│  · 单实例锁 / 窗口 / 菜单 / 生命周期                       │
-│  · 会话完成监听 (session-watcher.js) → 系统通知            │
-│  · 官方更新 (updater.js) → 用户同意后安装 overlay          │
-│  · 客户端自更新 (client-updater.js) → 下载/替换/重启       │
-│  · spawn vendor|resources 里的 node.exe                   │
-└──────────────┬───────────────────────────────────────────┘
-               │  dsh web --host 127.0.0.1 --port 0
-               ▼
-       内置 node.exe + @deepseek-ai/dsh
-       路径解析：用户目录 overlay > 内置包
-       输出 "dsh web: http://127.0.0.1:<port>"
-               │  解析 URL，轮询 HTTP 200
-               ▼
-       原生窗口加载 Web UI（仅本机回环访问）
+Deepseek-Harness-EAC-Mac/
+├── README.md                    # 本文件
+└── dsh-desktop/                 # Electron 桌面端
+    ├── main.js                  # Electron 主进程（已适配 macOS）
+    ├── electron-builder.yml     # 打包配置（已添加 macOS 支持）
+    ├── package.json             # 项目配置
+    ├── scripts/
+    │   ├── fetch-node-mac.js    # macOS Node 运行时获取脚本（新增）
+    │   ├── build-icon-mac.js    # PNG 转 ICNS 图标生成（新增）
+    │   ├── after-pack.js        # 构建后处理（已适配 macOS）
+    │   └── ...                  # 其他脚本
+    ├── build/
+    │   ├── entitlements.mac.plist  # macOS 应用权限（新增）
+    │   ├── icon.png             # 应用图标
+    │   └── ...
+    ├── assets/                  # 插件、皮肤、资源文件
+    └── BUILD-MACOS.md           # macOS 构建指南（新增）
 ```
 
-## 目录结构
+---
 
-```
-dsh-desktop/                  # Electron 桌面端
-├── main.js                   # Electron 主进程
-├── updater.js                # 官方 dsh agent 更新引擎
-├── client-updater.js         # 客户端本体自更新引擎
-├── balance.js                # DeepSeek 余额查询
-├── session-watcher.js        # 会话完成监听
-├── plugin-guard.js           # 插件保护中心引擎（快照/回滚/体检/修复/守护启动/事故报告）
-├── profile-module-heal.js    # profile 模块遮蔽自愈（真实目录 + pnpm 链接）
-├── preload.js                # 沙箱预加载
-├── assets/                   # 加载页、更新进度页、图标、皮肤、配套插件
-│   ├── skins/                # 10 款内置 Web UI 皮肤
-│   └── plugins/              # 桌面壳配套：dsh-balance / dsh-file-changes / dsh-terminal
-│                             # / dsh-easy-setup / dsh-skin-switch
-│                             # 内置社区插件：dsh-webui-market / dsh-tool-vision
-│                             # / dsh-soul-md / dsh-web-mobile-fix
-│                             # （含 vendor 与自包含运行时依赖，随仓库分发）
-├── scripts/                  # 构建与开发辅助脚本
-├── build/icon.png            # electron-builder 图标
-├── vendor/                   # 内置 node.exe / npm CLI（不入库）
-├── electron-builder.yml      # 打包配置
-└── dist/                     # 构建产物（不入库，发布到 Releases）
-openclaw-dsh-bridge/          # 微信桥接插件（可选，研究性质）
-research/                     # 第三方微信/桥接协议调研资料
+## 🔧 macOS 适配详情
+
+本项目对原版 EAC 进行了以下 macOS 适配：
+
+### 1. Node 运行时路径
+
+```javascript
+// 适配前（Windows）
+function nodeExe() {
+  return path.join(process.resourcesPath, 'node', 'node.exe');
+}
+
+// 适配后（跨平台）
+function nodeExe() {
+  const isMacOrLinux = process.platform === 'darwin' || process.platform === 'linux';
+  const nodeBin = isMacOrLinux ? 'node' : 'node.exe';
+  if (app.isPackaged) return path.join(process.resourcesPath, 'node', nodeBin);
+  return path.resolve(__dirname, 'vendor', 'node', nodeBin);
+}
 ```
 
-## Contributors
+### 2. 符号链接类型
 
-感谢每一位贡献者：
+```javascript
+// 适配前（Windows 专用）
+fs.symlinkSync(source, link, 'junction');
 
-<p align="center">
-  <a href="https://github.com/zouyuxuan122/Deepseek-Harness-EAC/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=zouyuxuan122/Deepseek-Harness-EAC" />
-  </a>
-</p>
+// 适配后（跨平台）
+const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+fs.symlinkSync(source, link, linkType);
+```
 
-### 交流群
+### 3. 构建配置
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/qq-group-qrcode.jpg" alt="dsh EAC QQ 交流群二维码" width="320" />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wechat-group-qrcode.jpg" alt="dsh EAC 微信交流群二维码" width="320" />
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><strong>QQ 交流群</strong><br />群号：523412163</td>
-    <td align="center"><strong>微信交流群</strong></td>
-  </tr>
-</table>
+```yaml
+# 新增 macOS 构建目标
+mac:
+  icon: build/icon.icns
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch:
+        - universal
+    - target: zip
+      arch:
+        - universal
+  entitlements: build/entitlements.mac.plist
+  hardenedRuntime: true
+```
 
-### Bug 反馈
+### 4. 应用权限
 
-遇到 Bug，或有希望我们增加的功能，请前往 [https://eac.dtyg123.dpdns.org/](https://eac.dtyg123.dpdns.org/)。
+```xml
+<!-- entitlements.mac.plist -->
+<key>com.apple.security.cs.allow-jit</key>
+<key>com.apple.security.network.client</key>
+<key>com.apple.security.files.user-selected.read-write</key>
+```
 
-## Star History
+---
 
-<a href="https://www.star-history.com/?repos=zouyuxuan122%2FDeepseek-Harness-EAC&type=date&legend=bottom-right">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=zouyuxuan122/Deepseek-Harness-EAC&type=date&theme=dark&legend=bottom-right&sealed_token=5SkHr7TORH0WuK6eeH5IP-Q2hISGL0m3EDvMKDG6hAUNQssgWBUixIuZWP_ygvty93H_loEZ8JUEgXKy8xGAuH4-mq_DTlClZbM_mOYiomJbfc3zANNWFg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=zouyuxuan122/Deepseek-Harness-EAC&type=date&legend=bottom-right&sealed_token=5SkHr7TORH0WuK6eeH5IP-Q2hISGL0m3EDvMKDG6hAUNQssgWBUixIuZWP_ygvty93H_loEZ8JUEgXKy8xGAuH4-mq_DTlClZbM_mOYiomJbfc3zANNWFg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=zouyuxuan122/Deepseek-Harness-EAC&type=date&legend=bottom-right&sealed_token=5SkHr7TORH0WuK6eeH5IP-Q2hISGL0m3EDvMKDG6hAUNQssgWBUixIuZWP_ygvty93H_loEZ8JUEgXKy8xGAuH4-mq_DTlClZbM_mOYiomJbfc3zANNWFg" />
- </picture>
-</a>
+## 📚 相关资源
 
-## License
+### 原始项目
 
-MIT。基于 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)（MIT）。内置皮肤版权归原作者所有（见上方皮肤许可表）。
+- **[Deepseek-Harness-EAC](https://github.com/zouyuxuan122/Deepseek-Harness-EAC)** — Windows/Linux 桌面客户端
+- **[deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** — 官方 agent harness
+- **[EAC 交流群](https://github.com/zouyuxuan122/Deepseek-Harness-EAC#交流群)** — QQ: 523412163
 
-<!-- 咕咕嘎嘎 -->
+### macOS 开发资源
+
+- **[Electron 文档](https://www.electronjs.org/)** — Electron 框架
+- **[electron-builder](https://www.electron.build/)** — 打包工具
+- **[Apple Developer](https://developer.apple.com/)** — macOS 开发指南
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
+
+---
+
+## 📄 许可证
+
+本项目采用 [MIT 许可证](LICENSE)。
+
+**特别说明：**
+- 本项目基于 [Deepseek-Harness-EAC](https://github.com/zouyuxuan122/Deepseek-Harness-EAC)（MIT 许可证）
+- 原始项目基于 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)（MIT 许可证）
+- 内置皮肤版权归原作者所有（详见原项目 README）
+
+---
+
+## 💬 反馈
+
+- **Bug 报告**：[GitHub Issues](https://github.com/1764712542/Deepseek-Harness-EAC-Mac/issues)
+- **功能建议**：[GitHub Discussions](https://github.com/1764712542/Deepseek-Harness-EAC-Mac/discussions)
+- **原项目反馈**：[EAC 反馈平台](https://eac.dtyg123.dpdns.org/)
+
+---
+
+<div align="center">
+
+**如果这个项目对你有帮助，请给个 ⭐ Star 支持一下！**
+
+**也请给原始项目一个 Star：[Deepseek-Harness-EAC](https://github.com/zouyuxuan122/Deepseek-Harness-EAC)**
+
+</div>
