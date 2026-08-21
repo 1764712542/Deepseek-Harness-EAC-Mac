@@ -407,7 +407,25 @@
     }, delay || 80);
   }
 
+  // ───────────────────────── 导航栏滚动修复 ─────────────────────────
+  // macOS 下设置页导航项多时被裁掉，注入 overflow-y:auto
+  var NAV_SCROLL_CSS_INJECTED = false;
+  function injectNavScrollCSS() {
+    if (NAV_SCROLL_CSS_INJECTED) return;
+    NAV_SCROLL_CSS_INJECTED = true;
+    var style = document.createElement('style');
+    style.textContent =
+      /* nav 容器：允许滚动 */
+      '.VOzbGW_nav{overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}' +
+      /* nav 列表：不限高 */
+      '.VOzbGW_navList{flex:1;min-height:0}' +
+      /* 面板：允许 nav 溢出 */
+      '.VOzbGW_panel{overflow:visible!important}';
+    document.head.appendChild(style);
+  }
+
   function scan() {
+    injectNavScrollCSS();
     var panelEl = findPanel();
     if (!panelEl) {
       if (state.panel) {
