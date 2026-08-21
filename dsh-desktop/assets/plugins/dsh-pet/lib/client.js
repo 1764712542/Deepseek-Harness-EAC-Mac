@@ -51,7 +51,7 @@ window.__ModuleLoader__.load({
 			// 根容器：fixed 固定定位、层级 40（在界面之上）、整体点击穿透（不挡界面操作）、禁止选中
 			// EAC 本地补丁：40 会被右侧栏（dsh-better-sidebar 面板 z-index:50）盖住，
 			// 提到 CSS 最大值保证页面桌宠始终是最高显示优先级（root 点击穿透不受影响）。
-			'.dsh-pet-root{position:fixed;z-index:2147483647;pointer-events:none;user-select:none}',
+			'.dsh-pet-root{position:fixed;z-index:2147483647;pointer-events:none;user-select:none;background:transparent}',
 			// EAC 本地补丁 2（根治）：官方 shell.overlay 容器（data-shell-overlay，
 			// z-index:20）创建独立层叠上下文，把上面 root 的 2147483647 限制在容器
 			// 内部、整体仍低于右侧栏(z-index:50)。这里把容器本身抬到最高 —— 容器
@@ -62,7 +62,7 @@ window.__ModuleLoader__.load({
 			// 左下角位置
 			'.dsh-pet-root[data-corner="bottom-left"]{left:24px;bottom:0}',
 			// 舞台：正方形（尺寸由 --dsh-pet-size 控制，默认 260px），本身不响应鼠标
-			'.dsh-pet-stage{position:relative;width:var(--dsh-pet-size,260px);height:var(--dsh-pet-size,260px);pointer-events:none}',
+			'.dsh-pet-stage{position:relative;width:var(--dsh-pet-size,260px);height:var(--dsh-pet-size,260px);pointer-events:none;overflow:hidden;background:transparent}',
 			// 视频：铺满舞台、保持比例、可交互（pointer-events:auto 重新开启）、抓取光标
 			// opacity:0 初始隐藏，transition 做 180ms 淡入淡出
 			'.dsh-pet-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:auto;cursor:grab;opacity:0;transition:opacity .18s ease;transform-origin:center}',

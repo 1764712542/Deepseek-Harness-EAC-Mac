@@ -166,8 +166,8 @@ ipcRenderer.on('dsh:balance', (_e, data) => {
 // ---------------------------------------------------------------------------
 
 const CHROME_CSS = `
-#${BAR_ID}{position:fixed;top:0;left:0;right:0;height:${BAR_HEIGHT}px;z-index:2147483000;
-  display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 ${IS_MAC ? '80' : '10'}px;
+#${BAR_ID}{position:fixed;top:0;left:0;right:0;height:${IS_MAC ? 0 : BAR_HEIGHT}px;z-index:2147483000;
+  display:none;
   -webkit-app-region:drag;user-select:none;box-sizing:border-box;
   font-family:var(--dsw-font-family,"SF Pro Display","PingFang SC",system-ui,sans-serif);
   background:color-mix(in srgb,var(--dsw-alias-bg-base,#0b1220) 74%,transparent);
@@ -391,6 +391,8 @@ function injectFloatBar() {
 
 function injectChrome() {
   if (FLOAT_MODE) { injectFloatBar(); return; }
+  // macOS: 使用原生标题栏，不注入自绘 chrome
+  if (IS_MAC) return;
   if (document.getElementById(BAR_ID)) return;
   const style = document.createElement('style');
   style.textContent = CHROME_CSS;
@@ -400,11 +402,11 @@ function injectChrome() {
   // fixed 定位的顶部元素（标签栏 + 折叠按钮）。不设置时它们渲染在视口
   // 顶部 0-36px，正好被本玻璃栏盖住——用户“看不到标签栏、无法折叠”
   // 的根因。dsh web 本体不消费该属性，不会双重下移。
-  document.documentElement.setAttribute('data-dsh-title-bar-height', String(BAR_HEIGHT));
+  document.documentElement.setAttribute('data-dsh-title-bar-height', String(IS_MAC ? 0 : BAR_HEIGHT));
 
   // 内容区整体下移，避免遮挡 Web UI 顶部。
   const layout = document.createElement('style');
-  layout.textContent = `body{box-sizing:border-box!important;padding-top:${BAR_HEIGHT}px!important}`;
+  layout.textContent = `body{box-sizing:border-box!important;padding-top:${IS_MAC ? 0 : BAR_HEIGHT}px!important}`;
   document.head.appendChild(layout);
 
   const bar = document.createElement('div');
@@ -459,6 +461,42 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', injectChrome);
 } else {
   injectChrome();
+}
+
+// ---------------------------------------------------------------------------
+// __DSH_MODULES__ 桥接：dsh-better-sidebar 的 terminal chunk 从
+// globalThis.__DSH_MODULES__ 读取模块系统，但 cordis 通过
+// ctx.reflect.provide("modules", ...) 注册，不会自动挂到 globalThis。
+// 这里用脚本注入 + 轮询等待 cordis 上线后桥接。
+// ---------------------------------------------------------------------------
+if (IS_MAC && !FLOAT_MODE) {
+  const bridgeScript = document.createElement('script');
+  bridgeScript.textContent = `
+(function bridgeDSHModules() {
+  if (globalThis.__DSH_MODULES__) return;
+  var tries = 0;
+  var timer = setInterval(function() {
+    tries++;
+    // cordis 在 boot 完成后会把 modules 放到 __cordis_context__ 上
+    // 或者 dsh-client-modules 的 apply() 调用 ctx.reflect.provide("modules", ms)
+    // 我们扫描 window 上所有 cordis 相关的全局对象
+    if (globalThis.__DSH_MODULES__) { clearInterval(timer); return; }
+    // 方法 1: 查找 cordis 上下文中的 modules
+    try {
+      var ctx = globalThis.__cordis_context__;
+      if (ctx && ctx.modules) { globalThis.__DSH_MODULES__ = ctx.modules; clearInterval(timer); return; }
+    } catch {}
+    // 方法 2: 从已加载的模块中提取
+    try {
+      var ml = globalThis.__ModuleLoader__;
+      if (ml && ml._modules) { globalThis.__DSH_MODULES__ = ml._modules; clearInterval(timer); return; }
+    } catch {}
+    // 方法 3: 拦截 dsh-client-modules 的 createClientModuleSystem 返回值
+    if (tries > 200) { clearInterval(timer); }
+  }, 100);
+})();
+`;
+  document.addEventListener('DOMContentLoaded', () => document.head.appendChild(bridgeScript));
 }
 
 // ---------------------------------------------------------------------------

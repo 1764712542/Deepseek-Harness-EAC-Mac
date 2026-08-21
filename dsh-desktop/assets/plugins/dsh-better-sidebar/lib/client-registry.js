@@ -1307,6 +1307,15 @@ window.__ModuleLoader__.load({
 		const CHUNK_URL = (name) => `/sidebar/bundle/${name}.js`;
 		/** Resolve the shell-installed module system (set before any plugin activates). */
 		function moduleSystem() {
+			if (globalThis.__DSH_MODULES__) return globalThis.__DSH_MODULES__;
+			try {
+				var ctx = globalThis.__cordis_context__;
+				if (ctx && ctx.modules) return ctx.modules;
+			} catch {}
+			try {
+				var ml = globalThis.__ModuleLoader__;
+				if (ml && ml._modules) return ml._modules;
+			} catch {}
 			return globalThis.__DSH_MODULES__;
 		}
 		function chunkRegistry() {

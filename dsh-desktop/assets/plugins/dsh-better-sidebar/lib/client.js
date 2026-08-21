@@ -1307,6 +1307,18 @@ window.__ModuleLoader__.load({
 		const CHUNK_URL = (name) => `/sidebar/bundle/${name}.js`;
 		/** Resolve the shell-installed module system (set before any plugin activates). */
 		function moduleSystem() {
+			if (globalThis.__DSH_MODULES__) return globalThis.__DSH_MODULES__;
+			// macOS 兼容：cordis 通过 ctx.reflect.provide("modules", ms) 注册，
+			// 不会自动挂到 globalThis。扫描 cordis 上下文。
+			try {
+				var ctx = globalThis.__cordis_context__;
+				if (ctx && ctx.modules) return ctx.modules;
+			} catch {}
+			// 尝试从 __ModuleLoader__ 提取
+			try {
+				var ml = globalThis.__ModuleLoader__;
+				if (ml && ml._modules) return ml._modules;
+			} catch {}
 			return globalThis.__DSH_MODULES__;
 		}
 		function chunkRegistry() {
