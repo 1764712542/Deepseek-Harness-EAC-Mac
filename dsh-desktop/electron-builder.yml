@@ -1,0 +1,147 @@
+appId: com.deepseek.dsh.desktop
+# No version suffix in productName: a versioned install dir gets nested on
+# upgrades (.../v1.0/v2.0) when the registry keeps the old INSTALLDIR, which
+# pushes deep node_modules paths past MAX_PATH — the NSIS 7z extractor then
+# silently drops those files and dsh web crashes with MODULE_NOT_FOUND (issue #4).
+productName: Deepseek Harness EAC
+copyright: MIT License
+# 仅保留中英文，移除 Electron 其余语言包（.pak，约 80MB），不影响功能体验。
+electronLanguages:
+  - en-US
+  - zh-CN
+directories:
+  output: dist
+  buildResources: build
+
+# electron-builder strips nested node_modules from extraResources; this hook
+# restores the bundled npm CLI's own dependencies after packing.
+afterPack: scripts/after-pack.js
+
+# Native modules (sharp / node-pty / koffi) are loaded by the bundled plain
+# node.exe, so keep everything as real files and never rebuild for Electron.
+asar: false
+npmRebuild: false
+buildDependenciesFromSource: false
+
+files:
+  - main.js
+  - updater.js
+  - client-updater.js
+  - logger.js
+  - plugin-updater.js
+  - balance.js
+  - session-watcher.js
+  - session-encoding-heal.js
+  - profile-module-heal.js
+  - patch-row-heal.js
+  - builtin-collision.js
+  - plugin-manager-state.js
+  - plugin-guard.js
+  - rescue-agent.js
+  - preset-sync.js
+  - error-detail.js
+  - bundle-integrity.js
+  - stable-port.js
+  - koffi-preflight.js
+  - renderer-recovery.js
+  - watchdog.js
+  - shortcut-maintenance.js
+  - preload.js
+  - assets/**/*
+  # 运行时脚本：koffi 预检探针（scripts/koffi-preflight.cjs）、会话删除补丁与
+  # 插件启停手术脚本（main.js 启动时 require）等必须在成品里存在。
+  - scripts/koffi-preflight.cjs
+  - scripts/patch-session-manage.js
+  - scripts/plugin-manager-patch.js
+  - scripts/onboarding.js
+  - scripts/make-release-hashes.js
+  - package.json
+  - "!**/*.md"
+  # `!**/*.md` above would strip every .md from node_modules too, which removes
+  # the SKILL.md files the bundled @deepseek-ai/dsh ships for its agent presets
+  # and silently breaks the 创造模式 skills. Re-include them: later patterns
+  # override earlier ones.
+  - "**/SKILL.md"
+
+extraResources:
+  # Windows: node.exe
+  - from: vendor/node/node.exe
+    to: node/node.exe
+    filter: ["**/*"]
+  # macOS / Linux: node
+  - from: vendor/node/node
+    to: node/node
+    filter: ["**/*"]
+  - from: vendor/npm
+    to: npm
+
+win:
+  icon: build/icon.png
+  target:
+    - target: portable
+      arch:
+        - x64
+    - target: nsis
+      arch:
+        - x64
+
+# macOS 构建配置
+mac:
+  icon: build/icon.icns
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch:
+        - universal
+    - target: zip
+      arch:
+        - universal
+  # macOS 应用权限
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # 签名（开发阶段可禁用）
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  # 允许网络访问（dsh web 需要）
+  extendInfo:
+    NSAppTransportSecurity:
+      NSAllowsArbitraryLoads: true
+    # 允许访问网络
+    LSUIElement: false
+
+dmg:
+  artifactName: Deepseek-Harness-EAC-v${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# 产物名带 ${version}（Setup-v<version>-x64.exe / Portable-v<version>-x64.exe）：
+# releases/latest/download/<file>.exe 要求「最新 release 里存在同名资产」，
+# 因此每次发版必须同步更新 README.md / README.en.md 的下载链接文件名
+# （旧链接在旧 release 上仍有资产，不会 404，但 /latest/ 只认最新 release 的
+# 同名文件）。client-updater.js 的资产选择兼容固定名与两种版本位置形态。
+portable:
+  artifactName: Deepseek-Harness-EAC-Portable-v${version}-${arch}.${ext}
+  # 稳定缓存目录名：配合 scripts/patch-portable-template.js 复用已解压目录，
+  # 避免每次启动都解压 app-64.7z（Defender 扫描 2.4 万文件导致分钟级冷启动）。
+  unpackDirName: deepseek-harness-eac-portable
+
+nsis:
+  artifactName: Deepseek-Harness-EAC-Setup-v${version}-${arch}.${ext}
+  include: build/installer.nsh
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  # V4：always 会在每次升级（含自动更新拉起的静默安装）时无条件重建桌面
+  # 快捷方式，与用户自定义/改名/换图标的快捷方式并存成两个。改为 true
+  # （尊重安装向导勾选项）；运行时维护见 main.js maintainShortcuts。
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Deepseek Harness EAC
+  uninstallDisplayName: Deepseek Harness EAC
+
+publish: null

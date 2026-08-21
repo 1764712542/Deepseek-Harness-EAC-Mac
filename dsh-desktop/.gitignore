@@ -1,0 +1,23 @@
+node_modules/
+dist/
+vendor/
+*.log
+data/
+.playwright-mcp/
+.DS_Store
+# 临时调试 / 备份产物不入库
+debug-session-dump.cjs
+e2e-base.txt
+package.json.bak-*
+scripts/tmp-dbg*.cjs
+scripts/tmp-instrument.cjs
+# build/ 只保留图标与 NSIS 安装脚本，其余构建产物不入库
+build/*
+!build/icon.ico
+!build/icon.png
+!build/installer.nsh
+# 内置社区插件的 vendor / 自包含运行时依赖 / 离线数据必须随仓库分发，
+# 否则克隆后构建出的安装包会复现“插件命名空间不可用”（vendor 缺失）
+# 与“tdai-memory 无法启动”（sqlite-vec / jieba / BM25 语料缺失）
+!assets/plugins/*/vendor/
+!assets/plugins/*/data/
