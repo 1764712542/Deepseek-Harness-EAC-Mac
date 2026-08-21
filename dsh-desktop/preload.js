@@ -465,38 +465,59 @@ if (document.readyState === 'loading') {
 
 // ---------------------------------------------------------------------------
 // __DSH_MODULES__ 桥接：dsh-better-sidebar 的 terminal chunk 从
-// globalThis.__DSH_MODULES__ 读取模块系统，但 cordis 通过
-// ctx.reflect.provide("modules", ...) 注册，不会自动挂到 globalThis。
-// 这里用脚本注入 + 轮询等待 cordis 上线后桥接。
+// globalThis.__DSH_MODULES__ 读取模块系统。真实架构（rc.8）：
+//   · dsh-client-modules 的 injectBootManifest() 在 index.html 注入
+//     window.__ModuleLoader__ facade（queue 模式，load 入队、create 建系统）
+//   · 主 bundle 的 run() 调用 __ModuleLoader__.create({...}) 创建
+//     ClientModuleSystem 实例，但实例只存局部变量（this.modules），
+//     从不挂 globalThis —— 旧 bridge 探测 __cordis_context__（无人设置）
+//     和 _modules（facade 从不存）必然失败。
+// 修复：在 document_start 注入 hook 脚本，等 facade 出现后拦截 create()，
+// 把返回值挂到 globalThis.__DSH_MODULES__（moduleSystem() 第一分支命中）。
+// 必须早于 module bundle 执行（preload 在页面脚本前运行，但 DOMContentLoaded
+// 注入太晚 —— module script 是 deferred，DOMContentLoaded 前已跑完 create）。
 // ---------------------------------------------------------------------------
 if (IS_MAC && !FLOAT_MODE) {
   const bridgeScript = document.createElement('script');
   bridgeScript.textContent = `
 (function bridgeDSHModules() {
   if (globalThis.__DSH_MODULES__) return;
-  var tries = 0;
-  var timer = setInterval(function() {
-    tries++;
-    // cordis 在 boot 完成后会把 modules 放到 __cordis_context__ 上
-    // 或者 dsh-client-modules 的 apply() 调用 ctx.reflect.provide("modules", ms)
-    // 我们扫描 window 上所有 cordis 相关的全局对象
-    if (globalThis.__DSH_MODULES__) { clearInterval(timer); return; }
-    // 方法 1: 查找 cordis 上下文中的 modules
-    try {
-      var ctx = globalThis.__cordis_context__;
-      if (ctx && ctx.modules) { globalThis.__DSH_MODULES__ = ctx.modules; clearInterval(timer); return; }
-    } catch {}
-    // 方法 2: 从已加载的模块中提取
-    try {
-      var ml = globalThis.__ModuleLoader__;
-      if (ml && ml._modules) { globalThis.__DSH_MODULES__ = ml._modules; clearInterval(timer); return; }
-    } catch {}
-    // 方法 3: 拦截 dsh-client-modules 的 createClientModuleSystem 返回值
-    if (tries > 200) { clearInterval(timer); }
-  }, 100);
+  var hooked = false;
+  function tryHook() {
+    if (hooked) return true;
+    var ml = globalThis.__ModuleLoader__;
+    if (!ml || typeof ml.create !== 'function') return false;
+    hooked = true;
+    var origCreate = ml.create.bind(ml);
+    ml.create = function(options) {
+      var ms = origCreate(options);
+      globalThis.__DSH_MODULES__ = ms;
+      ml._modules = ms;
+      return ms;
+    };
+    // 若 create 已被调用过（理论上不会，但保险），补挂已建实例
+    if (ml._modules) globalThis.__DSH_MODULES__ = ml._modules;
+    return true;
+  }
+  if (!tryHook()) {
+    var t = setInterval(function() {
+      if (tryHook()) clearInterval(t);
+    }, 50);
+    setTimeout(function() { clearInterval(t); }, 20000);
+  }
 })();
 `;
-  document.addEventListener('DOMContentLoaded', () => document.head.appendChild(bridgeScript));
+  // document_start 注入：documentElement 可能尚未解析出来，轮询等待它出现
+  // （必须在 module bundle 的 create() 之前注入 hook，deferred script 在
+  // DOMContentLoaded 前执行，所以这里最迟要在 DOMContentLoaded 前完成注入）。
+  (function injectBridge() {
+    const append = () => (document.documentElement || document.head).appendChild(bridgeScript);
+    if (document.documentElement || document.head) { append(); return; }
+    const t = setInterval(() => {
+      if (document.documentElement || document.head) { clearInterval(t); append(); }
+    }, 10);
+    setTimeout(() => clearInterval(t), 2000);
+  })();
 }
 
 // ---------------------------------------------------------------------------

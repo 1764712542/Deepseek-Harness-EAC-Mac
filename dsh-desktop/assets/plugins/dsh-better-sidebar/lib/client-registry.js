@@ -1326,10 +1326,19 @@ window.__ModuleLoader__.load({
 				var ml = globalThis.__ModuleLoader__;
 				if (ml && ml._modules) return (_moduleSystemCached = ml._modules);
 			} catch {}
+			// 兜底：用工厂闭包的 require 构造 adapter（__DSH_MODULES__ 从未注入时）
+			if (typeof require === 'function') {
+				return (_moduleSystemCached = {
+					'import': function(spec) {
+						try { return Promise.resolve(require(spec)); }
+						catch(e) { return Promise.reject(e); }
+					}
+				});
+			}
 			return globalThis.__DSH_MODULES__;
 		}
 		/** Polling wait for module system — resolves once available, rejects after timeout. */
-		function waitForModuleSystem(timeoutMs = 5000, intervalMs = 200) {
+		function waitForModuleSystem(timeoutMs = 3000, intervalMs = 200) {
 			const quick = moduleSystem();
 			if (quick) return Promise.resolve(quick);
 			return new Promise((resolve, reject) => {
