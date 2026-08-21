@@ -760,7 +760,7 @@ async function startServer(unsafePortRetries = 4, overlays = []) {
     // `--profile <name>` 直接在根命令上（本版本的 `web` 是 --profile web 的
     // 硬编码别名，不接受父级 --profile）；app 入口由 profile bundles 决定，
     // --host/--port 等透传给该 app。已实机冒烟验证 web-desktop 可启动。
-    const proc = spawn(nodeBin, ['--use-system-ca', bin, '--profile', desktopProfile(), ...patchArgs, '--host', '127.0.0.1', '--port', String(webPort)], {
+    const proc = spawn(nodeBin, ['--use-system-ca', bin, '--profile', desktopProfile(), ...patchArgs, '--host', '127.0.0.1', '--port', String(webPort), '--no-open'], {
       cwd: userDataDir,
       env: childEnv(),
       windowsHide: true,

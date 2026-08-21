@@ -17,6 +17,7 @@ const BAR_ID = '__dsh_desktop_chrome__';
 const BAR_HEIGHT = 36;
 const FLOAT_BAR_ID = '__dsh_desktop_floatbar__';
 const FLOAT_BAR_HEIGHT = 24;
+const IS_MAC = process.platform === 'darwin';
 
 // ---------------------------------------------------------------------------
 // Bridge (always exposed; the balance plugin reads it, the web UI keeps the
@@ -166,9 +167,9 @@ ipcRenderer.on('dsh:balance', (_e, data) => {
 
 const CHROME_CSS = `
 #${BAR_ID}{position:fixed;top:0;left:0;right:0;height:${BAR_HEIGHT}px;z-index:2147483000;
-  display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 10px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 ${IS_MAC ? '80' : '10'}px;
   -webkit-app-region:drag;user-select:none;box-sizing:border-box;
-  font-family:var(--dsw-font-family,"Segoe UI","Microsoft YaHei",system-ui,sans-serif);
+  font-family:var(--dsw-font-family,"SF Pro Display","PingFang SC",system-ui,sans-serif);
   background:color-mix(in srgb,var(--dsw-alias-bg-base,#0b1220) 74%,transparent);
   backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);
   border-bottom:1px solid color-mix(in srgb,var(--dsw-alias-border-l1,rgba(255,255,255,.09)) 55%,transparent)}
@@ -180,7 +181,7 @@ const CHROME_CSS = `
   color:var(--dsw-alias-label-primary,#e6ecff);white-space:nowrap;-webkit-app-region:drag}
 #${BAR_ID} .dch-badge{font-size:10px;line-height:14px;padding:1px 6px;border-radius:999px;
   color:var(--dsw-alias-label-tertiary,#93a5d8);border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.09));
-  white-space:nowrap;-webkit-app-region:drag;font-family:var(--ds-font-family-code,Consolas,monospace)}
+  white-space:nowrap;-webkit-app-region:drag;font-family:var(--ds-font-family-code,Menlo,monospace)}
 #${BAR_ID} .dch-right{display:flex;align-items:center;gap:2px;-webkit-app-region:no-drag}
 #${BAR_ID} .dch-btn{width:30px;height:28px;display:grid;place-items:center;border:none;border-radius:8px;
   background:transparent;color:var(--dsw-alias-label-secondary,#b8c5ea);cursor:pointer;padding:0;
@@ -195,7 +196,7 @@ const CHROME_CSS = `
   border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.1));border-radius:14px;
   box-shadow:0 12px 40px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.35);
   backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);
-  color:var(--dsw-alias-label-primary,#e6ecff);font-family:var(--dsw-font-family,"Segoe UI","Microsoft YaHei",system-ui,sans-serif)}
+  color:var(--dsw-alias-label-primary,#e6ecff);font-family:var(--dsw-font-family,"SF Pro Display","PingFang SC",system-ui,sans-serif)}
 #${BAR_ID} .dch-mh{padding:8px 10px 10px;border-bottom:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.08));
   margin-bottom:6px}
 #${BAR_ID} .dch-mh-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
@@ -206,7 +207,7 @@ const CHROME_CSS = `
   font:inherit;font-size:12.5px;line-height:18px;text-align:left;cursor:pointer;-webkit-app-region:no-drag}
 #${BAR_ID} .dch-item:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.08))}
 #${BAR_ID} .dch-item .dch-kbd{margin-left:auto;font-size:10.5px;color:var(--dsw-alias-label-caption,#5f6f9c);
-  font-family:var(--ds-font-family-code,Consolas,monospace)}
+  font-family:var(--ds-font-family-code,Menlo,monospace)}
 #${BAR_ID} .dch-item .dch-check{margin-left:auto;color:var(--dsw-alias-state-success-primary,#3ddc84);font-size:12px}
 #${BAR_ID} .dch-item[data-danger="1"]{color:var(--dsw-alias-state-error-primary,#ff7a85)}
 #${BAR_ID} .dch-sep{height:1px;background:var(--dsw-alias-border-l2,rgba(255,255,255,.08));margin:5px 6px}
@@ -218,7 +219,7 @@ const CHROME_CSS = `
 #${BAR_ID} .dch-repos-title{font-size:11px;color:var(--dsw-alias-label-tertiary,#8b9ac4);margin-bottom:4px}
 #${BAR_ID} .dch-repo-row{display:flex;align-items:center;gap:6px;min-height:24px}
 #${BAR_ID} .dch-repo-url{flex:1;min-width:0;font-size:11px;color:var(--dsw-alias-label-secondary,#a9b8de);
-  font-family:var(--ds-font-family-code,Consolas,monospace);white-space:nowrap;overflow:hidden;
+  font-family:var(--ds-font-family-code,Menlo,monospace);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;user-select:text;cursor:text}
 #${BAR_ID} .dch-copy{flex:none;appearance:none;border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.14));
   background:transparent;color:var(--dsw-alias-label-secondary,#a9b8de);border-radius:6px;padding:1px 8px;
@@ -240,7 +241,11 @@ let menuEl = null;
 let maxBtn = null;
 let state = { appVersion: '', agentVersion: '', agentSource: '', notifyOnTurnEnd: true, closeToTray: true, exitAction: 'ask', shortcutPolicy: 'auto' };
 
-const EXIT_ACTIONS = [
+const EXIT_ACTIONS = IS_MAC ? [
+  { value: 'ask', label: '每次询问' },
+  { value: 'minimize', label: '后台运行（隐藏到 Dock）' },
+  { value: 'quit', label: '直接退出' },
+] : [
   { value: 'ask', label: '每次询问' },
   { value: 'minimize', label: '后台运行（最小化到托盘）' },
   { value: 'quit', label: '直接退出' },
@@ -276,9 +281,9 @@ function renderMenu() {
     </div>
     <div class="dch-sep"></div>
     <button class="dch-item" data-act="restart-service"><span>重启 Web 服务</span><span class="dch-kbd">不关闭应用</span></button>
-    <button class="dch-item" data-act="reload"><span>重新加载</span><span class="dch-kbd">Ctrl+R</span></button>
-    <button class="dch-item" data-act="devtools"><span>开发者工具</span><span class="dch-kbd">F12</span></button>
-    <button class="dch-item" data-act="fullscreen"><span>全屏</span><span class="dch-kbd">F11</span></button>
+    <button class="dch-item" data-act="reload"><span>重新加载</span><span class="dch-kbd">${IS_MAC ? '⌘+R' : 'Ctrl+R'}</span></button>
+    <button class="dch-item" data-act="devtools"><span>开发者工具</span><span class="dch-kbd">${IS_MAC ? '⌥+⌘+I' : 'F12'}</span></button>
+    <button class="dch-item" data-act="fullscreen"><span>全屏</span><span class="dch-kbd">${IS_MAC ? '⌃+⌘+F' : 'F11'}</span></button>
     <div class="dch-sep"></div>
     <button class="dch-item" data-act="open-browser">在浏览器中打开</button>
     <button class="dch-item" data-act="export-logs">导出日志</button>
@@ -412,9 +417,9 @@ function injectChrome() {
     </div>
     <div class="dch-right">
       <button class="dch-btn" data-act="menu" title="菜单" aria-label="菜单">${GLYPHS.menu}</button>
-      <button class="dch-btn" data-act="min" title="最小化" aria-label="最小化">${GLYPHS.min}</button>
+      ${IS_MAC ? '' : `<button class="dch-btn" data-act="min" title="最小化" aria-label="最小化">${GLYPHS.min}</button>
       <button class="dch-btn" data-act="max" title="最大化" aria-label="最大化">${GLYPHS.max}</button>
-      <button class="dch-btn dch-close" data-act="close" title="关闭" aria-label="关闭">${GLYPHS.close}</button>
+      <button class="dch-btn dch-close" data-act="close" title="关闭" aria-label="关闭">${GLYPHS.close}</button>`}
     </div>
     <div class="dch-menu" hidden></div>`;
   document.body.appendChild(bar);
