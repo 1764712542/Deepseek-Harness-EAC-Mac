@@ -160,7 +160,7 @@ window.__ModuleLoader__.load({
       return React.createElement('li', { style: CARD_STYLE, 'data-testid': 'dsh-pet-settings-fish' },
         React.createElement('div', null,
           React.createElement('strong', { style: { fontSize: 16 } }, '大肥鱼桌面伴侣'),
-          React.createElement('p', { style: { margin: '5px 0 0', opacity: 0.72 } }, '始终显示在 Windows 桌面最上层，右键可隐藏、减少动态。'),
+          React.createElement('p', { style: { margin: '5px 0 0', opacity: 0.72 } }, '始终显示在桌面最上层，右键可隐藏、减少动态。'),
         ),
         status === 'unavailable'
           ? React.createElement('span', { role: 'status' }, '大肥鱼设置尚未连接到 DSH Host。')
